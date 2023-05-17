@@ -136,8 +136,7 @@ function LoadData(){
             legend = L.control({position: 'bottomleft'});
             legend.onAdd = function (map) {
                 var div = L.DomUtil.create('div', 'info legend'),
-                    grades = [0, 1*maxAQI/7, 2*maxAQI/7, 3*maxAQI/7, 4*maxAQI/7, 5*maxAQI/7, 6*maxAQI/7],
-                    labels = [];
+                    grades = [0*maxAQI/7, 1*maxAQI/7, 2*maxAQI/7, 3*maxAQI/7, 4*maxAQI/7, 5*maxAQI/7, 6*maxAQI/7];
                 // loop through our density intervals and generate a label with a colored square for each interval
                 for (var i = 0; i < grades.length; i++) {
                     div.innerHTML +=
