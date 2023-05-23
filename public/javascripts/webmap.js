@@ -163,14 +163,6 @@ function LoadData(){
             var coords = '';
             coords = geojsonPolygon["features"][0]["geometry"]["coordinates"];
 
-            if(excludePolygons){
-                layerControl.removeLayer(excludePolygons);
-                map.removeLayer(excludePolygons);
-            }
-            excludePolygons = L.geoJSON(geojsonPolygon, {color: 'black'});
-            layerControl.addOverlay(excludePolygons, "Excluded Polygon");
-            excludePolygons.addTo(map);
-
             if(router){
                 map.removeControl(router);
             }
