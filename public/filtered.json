@@ -1,7 +1,7 @@
 {
     "type": "FeatureCollection",
     "name": "filtered_output",
-    "threshold": 91,
+    "threshold": 92,
     "crs": {
         "type": "name",
         "properties": {
@@ -69,8 +69,8 @@
                             14.55768
                         ],
                         [
-                            121.04105263157895,
-                            14.55768
+                            121.03928571428571,
+                            14.555919999999999
                         ],
                         [
                             121.04105263157895,
