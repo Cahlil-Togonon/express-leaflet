@@ -17013,14 +17013,16 @@ module.exports = L.Routing = {
 			    wpLatLng,
 			    routeCoord;
 
+            // console.log(wpIndices);
+            // console.log(wps);
 			for (i = 0; i < wps.length; i++) {
 				wpLatLng = wps[i].latLng;
-				routeCoord = L.latLng(this._route.coordinates[wpIndices[i]]);
-				if (wpLatLng.distanceTo(routeCoord) >
-					this.options.missingRouteTolerance) {
-					this._addSegment([wpLatLng, routeCoord],
-						this.options.missingRouteStyles);
-				}
+				routeCoord = L.latLng(this._route[wpIndices[i]]);
+				// if (wpLatLng.distanceTo(routeCoord) >
+				// 	this.options.missingRouteTolerance) {
+				// 	this._addSegment([wpLatLng, routeCoord],
+				// 		this.options.missingRouteStyles);
+				// }
 			}
 		},
 
