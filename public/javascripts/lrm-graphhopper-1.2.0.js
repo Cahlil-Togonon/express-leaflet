@@ -318,13 +318,14 @@ if (typeof module !== undefined) module.exports = polyline;
 
 			for (i = 0; i < response.length; i++) {
 				path = response[i];
-				// coordinates = this._decodePolyline(path.points);
+				coordinates = this._decodePolyline(path.points);
+				console.log(coordinates);
 				mappedWaypoints =
-					this._mapWaypointIndices(inputWaypoints, path.instructions, path.points);
+					this._mapWaypointIndices(inputWaypoints, path.instructions, coordinates);
 
 				alts.push({
 					name: '',
-					coordinates: path.points,
+					coordinates: coordinates,
 					instructions: this._convertInstructions(path.instructions),
 					summary: {
 						totalDistance: path.distance,

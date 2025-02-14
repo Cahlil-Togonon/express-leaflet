@@ -2,8 +2,8 @@
 
 var plan = L.Routing.plan(
     [
-        L.latLng(14.6539, 121.0685),
-        L.latLng(14.574 , 121.052)
+        L.latLng(14.64956, 121.06837),
+        L.latLng(14.64489 , 121.07427)
     ],{
     geocoder: L.Control.Geocoder.nominatim(),
     waypointNameFallback: function(latLng) {
@@ -40,16 +40,11 @@ var layerControl = L.control.layers(null,null,{collapsed:false}).addTo(map);
 // layerControl.addOverlay(osmb, "OSM buildings");
 // osmb.addTo(map);
 
-var waypoints = [
-    L.latLng(14.6539, 121.0685),
-    L.latLng(14.574 , 121.052)
-];
-
 var router = L.Routing.control({
-    waypoints: [
-        L.latLng(14.6539, 121.0685),
-        L.latLng(14.574 , 121.052)
-    ],
+    // waypoints: [
+    //     L.latLng(14.64956, 121.06837),
+    //     L.latLng(14.64489 , 121.07427)
+    // ],
     // router: L.Routing.graphHopper(apiKey='a8a55b5c-5382-407e-9301-a0d86d7f9a02'),
     router: L.Routing.graphHopper(undefined /* no api key */, {
         serviceUrl: 'http://localhost:9098/routing'
@@ -108,7 +103,7 @@ var router = L.Routing.control({
 
 function refreshLayers(){
     // threshold = geojsonPolygon.threshold;
-    maxAQI = 200;
+    maxAQI = 100;
     // var polygon_AQI = 0;
 
     // // var excludePoly2 = [];
@@ -136,7 +131,6 @@ function refreshLayers(){
     //         excludePoly.push(excludePoly3["geometry"]["coordinates"][i][0]);
     //     }
     // }
-    router.route(waypoints);
 
     function getColor(d) {
         // // US AQI absolute scale
@@ -204,16 +198,16 @@ function refreshLayers(){
         });
     }
 
-    // if(aqiPolygons){
-    //     layerControl.removeLayer(aqiPolygons);
-    //     map.removeLayer(aqiPolygons);
-    // }
-    // aqiPolygons = L.geoJson(geojsonPolygon, {
-    //     style: layer_style,
-    //     onEachFeature: onEachFeature
-    // });
-    // layerControl.addOverlay(aqiPolygons, "AQI Map");
-    // aqiPolygons.addTo(map);
+    if(aqiPolygons){
+        layerControl.removeLayer(aqiPolygons);
+        map.removeLayer(aqiPolygons);
+    }
+    aqiPolygons = L.geoJson(geojsonPolygon, {
+        style: layer_style,
+        onEachFeature: onEachFeature
+    });
+    layerControl.addOverlay(aqiPolygons, "AQI Map");
+    aqiPolygons.addTo(map);
 
     //////////////////////////////////////
     
