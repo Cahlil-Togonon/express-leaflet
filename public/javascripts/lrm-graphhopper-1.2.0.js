@@ -319,18 +319,18 @@ if (typeof module !== undefined) module.exports = polyline;
 			for (i = 0; i < response.length; i++) {
 				path = response[i];
 				coordinates = this._decodePolyline(path.points);
-				console.log(coordinates);
+				// console.log(coordinates);
 				mappedWaypoints =
 					this._mapWaypointIndices(inputWaypoints, path.instructions, coordinates);
 
 				alts.push({
-					name: '',
+					name: path.name,
 					coordinates: coordinates,
 					instructions: this._convertInstructions(path.instructions),
 					summary: {
 						totalDistance: path.distance,
-						totalTime: path.time / 1000,
-						totalAscend: path.ascend,
+						totalTime: path.time,
+						totalWeight: path.weight
 					},
 					inputWaypoints: inputWaypoints,
 					actualWaypoints: mappedWaypoints.waypoints,
@@ -376,8 +376,8 @@ if (typeof module !== undefined) module.exports = polyline;
 		},
 
 		buildRouteUrl: function(waypoints, options) {
-			var routetype = 'greenest',
-				vehicle = 'foot',
+			var routetype = this.options.RouteType,
+				vehicle = this.options.Vehicle,
 
 				locs = [],
 				i,
