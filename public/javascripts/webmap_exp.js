@@ -28,17 +28,15 @@ var plan = L.Routing.plan(
 
 var maxAQI = 100;
 var threshold = 100;
-var aqiPolygons;
-var info;
-var legend;
-var threshold_slider;
+var aqiPolygons, info, legend;
+// var threshold_slider;
 var geojsonPolygon;
 var aqi_tiles;
+var first_run = true;
 // var osmb = new OSMBuildings(map).load('https://{s}.data.osmbuildings.org/0.2/anonymous/tile/{z}/{x}/{y}.json');
-var layerControl = L.control.layers(null,null,{collapsed:false}).addTo(map);
-
 // layerControl.addOverlay(osmb, "OSM buildings");
 // osmb.addTo(map);
+var layerControl = L.control.layers(null,null,{collapsed:false}).addTo(map);
 
 var router = L.Routing.control({
     // waypoints: [
@@ -47,14 +45,19 @@ var router = L.Routing.control({
     // ],
     // router: L.Routing.graphHopper(apiKey='a8a55b5c-5382-407e-9301-a0d86d7f9a02'),
     router: L.Routing.graphHopper(undefined /* no api key */, {
-        serviceUrl: 'http://localhost:9098/routing'
+        serviceUrl: 'http://localhost:9098/routing',
+        RouteType: "greenest",
+        Vehicle: "foot",
+        alternatives: 3
     }),
     routeWhileDragging: false,
     fitSelectedRoutes: false,
-    plan: plan
+    plan: plan,
+    alternatives: true
 }).addTo(map);
 
 // var excludePoly = ''
+
 // var router = L.Routing.control({
 //     router: L.Routing.valhalla('','pedestrian',excludePoly,''),
 //     formatter: new L.Routing.Valhalla.Formatter(),
@@ -63,76 +66,89 @@ var router = L.Routing.control({
 //     plan: plan
 // }).addTo(map);
 
-// function fasterUnion(allGeometries) {
-//     const mid = Math.floor(allGeometries.length / 2);
-//     let group1 = allGeometries.slice(0, mid);
-//     let group2 = allGeometries.slice(mid);
-  
-//     while (group1.length > 1) {
-//       group1 = unionGroup(group1);
-//     }
-//     while (group2.length > 1) {
-//       group2 = unionGroup(group2);
-//     }
-  
-//     let result;
-//     if (group1.length === 1 && group2.length === 1) {
-//       result = turf.union(group1[0], group2[0]);
-//     } else if (group1.length === 1) {
-//       result = group1[0];
-//     } else {
-//       result = group2[0];
-//     }
-  
-//     return result;
-//   }
-  
-//   function unionGroup(group) {
-//     let newGroup = [];
-//     for (let i = 0; i < group.length; i += 2) {
-//       let a = group[i];
-//       let b = i + 1 < group.length ? group[i + 1] : null;
-//       if (b) {
-//         newGroup.push(turf.union(a, b));
-//       } else {
-//         newGroup.push(a);
-//       }
-//     }
-//     return newGroup;
-//   }
+// Create custom control for selecting RouteType
+var routeTypes = ['fastest', 'shortest', 'greenest', 'balanced', 'all'];
+var routeTypeControl = L.Control.extend({
+    options: {
+        position: 'topleft' // Position of the button
+    },
+    onAdd: function(map) {
+        var container = L.DomUtil.create('div', 'leaflet-bar2 route-type-control');
+        routeTypes.forEach(function(routeType) {
+            var button = L.DomUtil.create('a', '', container);
+            button.href = '#';
+            button.innerHTML = routeType.charAt(0).toUpperCase() + routeType.slice(1); // Capitalize the first letter
+            button.onclick = function(e) {
+                e.preventDefault();
+                updateActiveState(button, '.route-type-control');
+
+                router.getRouter().options.RouteType = routeType;
+                router.route();
+            };
+        });
+        return container;
+    }
+});
+
+var transportation = ['car', 'foot', 'bike', 'motorcycle'];
+var transportationControl = L.Control.extend({
+    options: {
+        position: 'topleft'
+    },
+    onAdd: function(map) {
+        var container = L.DomUtil.create('div', 'leaflet-bar2 transpo-type-control');
+        transportation.forEach(function(transport) {
+            var button = L.DomUtil.create('a', '', container);
+            button.href = '#';
+            button.innerHTML = transport.charAt(0).toUpperCase() + transport.slice(1); // Capitalize the first letter
+            button.onclick = function(e) {
+                e.preventDefault();
+                updateActiveState(button, '.transpo-type-control');
+
+                router.getRouter().options.Vehicle = transport;
+                router.route();
+            };
+        });
+        return container;
+    }
+});
+
+function updateActiveState(clickedButton, containerSelector) {
+    // Reset active state for all buttons within the specified container
+    var buttons = document.querySelectorAll(containerSelector + ' a');
+    buttons.forEach(function(button) {
+        button.classList.remove('active'); // Remove active class from all buttons
+    });
+    // Add active class to the clicked button
+    clickedButton.classList.add('active');
+}
+
+map.addControl(new routeTypeControl());
+map.addControl(new transportationControl()); // Add the routeType control to the map
+
+// Set default selections (fastest and foot) on page load
+function setDefaultSelections() {
+    // RouteType default to 'fastest'
+    var defaultRouteTypeButton = document.querySelector('.route-type-control a:nth-child(3)');
+    if (defaultRouteTypeButton) {
+        updateActiveState(defaultRouteTypeButton, '.route-type-control');
+    }
+
+    // TranspoType default to 'foot'
+    var defaultTransportButton = document.querySelector('.transpo-type-control a:nth-child(2)');
+    if (defaultTransportButton) {
+        updateActiveState(defaultTransportButton, '.transpo-type-control');
+    }
+}
+
+window.onload = setDefaultSelections;
+
 
 function refreshLayers(){
-    // threshold = geojsonPolygon.threshold;
-    maxAQI = 100;
-    // var polygon_AQI = 0;
-
-    // // var excludePoly2 = [];
-    // var excludePoly3 = [];
-    // for(var i=0; i < geojsonPolygon.features.length; i++){
-    //     polygon_AQI = geojsonPolygon.features[i].properties.AQI;
-    //     maxAQI = polygon_AQI != 32767 && polygon_AQI > maxAQI ? polygon_AQI : maxAQI;
-    //     if(geojsonPolygon.features[i].properties.AQI >= threshold){
-    //         // excludePoly2.push(geojsonPolygon["features"][i]["geometry"]["coordinates"][0])
-    //         excludePoly3.push(geojsonPolygon["features"][i])
-    //     }
-    // };
-
-    // // excludePoly = excludePoly2;
-    // excludePoly3 = fasterUnion(excludePoly3);
-    // if(excludePoly3==null){
-    //     excludePoly = "";
-    // }
-    // else if(typeof(excludePoly3["geometry"]["coordinates"][0][0][0]) == "number"){
-    //     excludePoly = excludePoly3["geometry"]["coordinates"];
-    // }
-    // else{
-    //     excludePoly = [];
-    //     for(var i=0; i < excludePoly3["geometry"]["coordinates"].length; i++){
-    //         excludePoly.push(excludePoly3["geometry"]["coordinates"][i][0]);
-    //     }
-    // }
-
+    
     function getColor(d) {
+        maxAQI = 100;
+        
         // // US AQI absolute scale
         // if (d <= 50) return "#02e400";
         // if (d <= 100) return "#ffff02";
@@ -159,7 +175,7 @@ function refreshLayers(){
             opacity: 1,
             color: 'white',
             dashArray: '2',
-            fillOpacity: 0.5
+            fillOpacity: 0.3
         };
     }
     function line_style(feature) {
@@ -175,11 +191,11 @@ function refreshLayers(){
         var layer = e.target;
         layer.setStyle({
             weight: 1,
-            color: '#666',
+            color: '#999',
             dashArray: '',
-            fillOpacity: 0.7
+            fillOpacity: 0.3
         });
-        layer.bringToFront();
+        // layer.bringToFront();
         info.update(layer.feature.properties.AQI.toString());
     }
     function resetHighlight(e) {
@@ -211,46 +227,56 @@ function refreshLayers(){
 
     //////////////////////////////////////
     
-    if(aqi_tiles){
-        layerControl.removeLayer(aqi_tiles);
-        map.removeLayer(aqi_tiles);
-    }
+    // if(aqi_tiles){
+    //     layerControl.removeLayer(aqi_tiles);
+    //     map.removeLayer(aqi_tiles);
+    // }
 
-    // var date_time = geojsonPolygon["properties"]["date_time"];
-    // var date_time = 'latest';
-    var vectorServer = "http://localhost:7800/";
-    var vectorLayerId = 'public.aqi_filter';
-    var vectorUrl = vectorServer + vectorLayerId + `/{z}/{x}/{y}.pbf?properties=aqi&threshold=${threshold}`;
-    console.log(vectorUrl);
-    var vectorTileStyling = {
-        'default' : function(properties) {
-            return {
-                weight: 2,
-                opacity: 0.5,
-                color: getColor(properties.aqi),
-                fillOpacity: 0
+    if(first_run){
+        var vectorServer = "http://localhost:7800/";
+        var vectorLayerId = 'public.aqi_filter';
+        // var vectorUrl = vectorServer + vectorLayerId + `/{z}/{x}/{y}.pbf?properties=aqi&threshold=${threshold}`;
+        // var vectorLayerId = 'public.street_aqi';
+        var vectorUrl = vectorServer + vectorLayerId + `/{z}/{x}/{y}.pbf?properties=aqi`;
+        console.log(vectorUrl);
+        var vectorTileStyling = {
+            'default' : function(properties) {
+                return {
+                    weight: 2,
+                    opacity: 0.5,
+                    color: getColor(properties.aqi),
+                    fillOpacity: 0
+                }
+            } 
+        };
+        var vectorTileOptions = {
+            // interactive: true, pane: 'OverlayPane',
+            vectorTileLayerStyles: vectorTileStyling,
+            onEachFeature: onEachFeature,
+            rendererFactory: L.canvas.tile,
+            attribution: "&copy; AQI Tile Map served by <a href='https://github.com/CrunchyData/pg_tileserv'>pg_tileserv</a>",
+            interactive: true,
+        };
+        L.DomEvent.fakeStop = function () {
+            return true;
+        }
+        aqi_tiles = L.vectorGrid.protobuf(vectorUrl, vectorTileOptions,
+            {
+                onEachFeature: onEachFeature
             }
-        } 
+        ).on('click',function(e) {
+            alert(e.layer.properties.aqi);
+            L.DomEvent.stop(e);
+        });
+
+        layerControl.addOverlay(aqi_tiles, "AQI tilemap");
+        aqi_tiles.addTo(map);
     };
-    var vectorTileOptions = {
-        // interactive: true, pane: 'OverlayPane',
-        vectorTileLayerStyles: vectorTileStyling,
-        rendererFactory: L.canvas.tile,
-        attribution: "&copy; AQI Tile Map served by <a href='https://github.com/CrunchyData/pg_tileserv'>pg_tileserv</a>",
-        interactive: true,
-    };
-    L.DomEvent.fakeStop = function () {
-        return true;
-      }
-    aqi_tiles = L.vectorGrid.protobuf(vectorUrl, vectorTileOptions).on('click',function(e) {
-        alert(e.layer.properties.aqi);
-        L.DomEvent.stop(e);
-    });
+    
+    first_run = false;
+    // aqi_tiles.setUrl(vectorUrl);
 
-    layerControl.addOverlay(aqi_tiles, "AQI tilemap");
-    aqi_tiles.addTo(map);
-
-
+    /////////////////////////////
 
     // Function to choose color based on the data source
     function getSourceColor(source) {
@@ -326,7 +352,7 @@ function refreshLayers(){
     };
     // method that we will use to update the control based on feature properties passed
     info.update = function (props) {
-        this._div.innerHTML = '<h4>US AQI Levels</h4>' +  (props ?
+        this._div.innerHTML = '<h4>US AQI Level</h4>' +  (props ?
             '<b>' + props + '</b> US AQI'
             : 'Hover over an area');
     };
@@ -351,6 +377,13 @@ function refreshLayers(){
         return div;
     };
     legend.addTo(map);
+
+    aqiPolygons.setZIndex(1); // Polygons at the bottom
+    aqi_tiles.setZIndex(100);
+    router.setZIndex(101);
+    circleMarker.setZIndex(1000); // Circle marker always on top
+    info.setZIndex(10000); // Info control on top
+    legend.setZIndex(10001); // Legend on top
 }
 
 async function LoadData(){
@@ -368,20 +401,20 @@ async function LoadData(){
         });
     console.log(r1);
 
-    threshold_slider = L.control.slider(function(value) {
-        threshold = value;
-        refreshLayers();
-    }, {
-    max: 200,
-    min: 0,
-    value: threshold,
-    step: 1,
-    size: '250px',
-    collapsed: false,
-    logo: 'threshold',
-    position: 'topleft',
-    id: 'threshold_slider'
-    }).addTo(map);
+    // threshold_slider = L.control.slider(function(value) {
+    //     threshold = value;
+    //     refreshLayers();
+    // }, {
+    // max: 200,
+    // min: 0,
+    // value: threshold,
+    // step: 1,
+    // size: '250px',
+    // collapsed: false,
+    // logo: 'threshold',
+    // position: 'topleft',
+    // id: 'threshold_slider'
+    // }).addTo(map);
 
     setInterval(function(){refreshLayers();},1 * 60 * 1000);
 }
