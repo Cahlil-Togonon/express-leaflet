@@ -8,6 +8,44 @@
   <link rel="stylesheet" href="stylesheets/Control.Geocoder.css">
   <link rel="stylesheet" href="stylesheets/leaflet.routing.valhalla.css">
   <link rel="stylesheet" href="stylesheets/leaflet-slider.css">
+  <style>
+  
+    /* Style for leaflet control buttons */
+ /* Style for leaflet control buttons */
+  .leaflet-bar2 a {
+      background-color: #2489bb;
+      color: rgb(0, 0, 0);
+      padding: 6px 12px;
+      font-size: 14px;
+      text-align: left;
+      display: block;
+      margin: 2px 0; /* Add space between buttons */
+      width: auto; /* Make button width fit content */
+      min-width: 90px; /* Set a minimum width for all buttons */
+      box-sizing: border-box; /* Include padding in the width */
+      transition: background-color 0.3s ease;
+      text-decoration: none;
+  }
+
+  .leaflet-bar2 {
+      display: flex;
+      flex-direction: column; /* Stack buttons vertically */
+  }
+
+  .leaflet-bar2 a:hover {
+      background-color: #1e6c8c;
+  }
+
+  .leaflet-bar2 .active {
+      background-color: #1e6c8c !important; /* Change color when active */
+  }
+
+  .route-type-control, .transpo-type-control {
+      display: inline-flex; /* Allow the buttons to be inline */
+      flex-direction: column;
+      align-items: stretch; /* Stretch buttons to fill the width */
+  }
+  </style>  
 </head>
 
 <body>
