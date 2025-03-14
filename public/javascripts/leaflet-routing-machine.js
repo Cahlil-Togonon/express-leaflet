@@ -16329,6 +16329,10 @@ module.exports={
 			return Math.round(d / p) * p;
 		},
 
+        formatWeight: function(w){
+            return w + ' weight';
+        },
+
 		formatTime: function(t /* Number (seconds) */) {
 			var un = this.options.unitNames || this._localization.localize('units');
 			// More than 30 seconds precision looks ridiculous
@@ -16721,7 +16725,7 @@ module.exports = L.Routing = {
 				opacity: 1,
 				fillOpacity: 0.7
 			},
-			summaryTemplate: '<h2>{name}</h2><h3>{distance}, {time}</h3>',
+			summaryTemplate: '<h2>{name}</h2><h3>{distance}, {time}, weight: {weight}</h3>',
 			timeTemplate: '{time}',
 			containerClassName: '',
 			alternativeClassName: '',
@@ -16818,7 +16822,8 @@ module.exports = L.Routing = {
 				data = L.extend({
 					name: alt.name,
 					distance: this._formatter.formatDistance(alt.summary.totalDistance, this.options.totalDistanceRoundingSensitivity),
-					time: this._formatter.formatTime(alt.summary.totalTime)
+					time: this._formatter.formatTime(alt.summary.totalTime),
+                    weight: alt.summary.totalWeight
 				}, alt);
 			altDiv.innerHTML = typeof(template) === 'function' ? template(data) : L.Util.template(template, data);
 			L.DomEvent.addListener(altDiv, 'click', this._onAltClicked, this);
@@ -18062,7 +18067,8 @@ module.exports = L.Routing = {
 					instructions: [],
 					summary: {
 						totalDistance: responseRoute.distance,
-						totalTime: responseRoute.duration
+						totalTime: responseRoute.duration,
+                        totalWeight: responseRoute.weight
 					}
 				},
 				legNames = [],
