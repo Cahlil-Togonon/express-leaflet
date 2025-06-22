@@ -46,8 +46,8 @@ var router = L.Routing.control({
     // router: L.Routing.graphHopper(apiKey='a8a55b5c-5382-407e-9301-a0d86d7f9a02'),
     router: L.Routing.graphHopper(undefined /* no api key */, {
         serviceUrl: 'http://localhost:9098/routing',
-        RouteType: "greenest",
-        Vehicle: "foot",
+        RouteType: "all",
+        Vehicle: "car",
         alternatives: 3
     }),
     routeWhileDragging: false,
@@ -234,9 +234,9 @@ function refreshLayers(){
 
     if(first_run){
         var vectorServer = "http://localhost:7800/";
-        var vectorLayerId = 'public.aqi_filter';
+        // var vectorLayerId = 'public.aqi_filter';
         // var vectorUrl = vectorServer + vectorLayerId + `/{z}/{x}/{y}.pbf?properties=aqi&threshold=${threshold}`;
-        // var vectorLayerId = 'public.street_aqi';
+        var vectorLayerId = 'public.street_aqi';
         var vectorUrl = vectorServer + vectorLayerId + `/{z}/{x}/{y}.pbf?properties=aqi`;
         console.log(vectorUrl);
         var vectorTileStyling = {
