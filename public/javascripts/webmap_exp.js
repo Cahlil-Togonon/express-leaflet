@@ -152,7 +152,7 @@ function refreshLayers(){
     }
     function layer_style(feature) {
         return {            // highlight black if >= threshold
-            fillColor: feature.properties.AQI >= threshold ? '#000000' : getColor(feature.properties.AQI),
+            fillColor: feature.properties.aqi >= threshold ? '#000000' : getColor(feature.properties.aqi),
             weight: 0,
             opacity: 1,
             color: 'white',
@@ -196,16 +196,30 @@ function refreshLayers(){
         });
     }
 
-    if(aqiPolygons){
-        layerControl.removeLayer(aqiPolygons);
-        map.removeLayer(aqiPolygons);
-    }
-    aqiPolygons = L.geoJson(geojsonPolygon, {
+    fetch("/api/polygonized_aqi.geojson")
+    .then(res => res.json())
+    .then(geojsonPolygon => {
+        console.log(geojsonPolygon);
+
+        if(aqiPolygons){
+            layerControl.removeLayer(aqiPolygons);
+            map.removeLayer(aqiPolygons);
+        }
+        aqiPolygons = L.geoJson(geojsonPolygon["features"], {
         style: layer_style,
         onEachFeature: onEachFeature
+        });
+        layerControl.addOverlay(aqiPolygons, "AQI Map");
+        aqiPolygons.addTo(map);
+    })
+    .catch(function (err) {
+        console.log('error: ' + err);
     });
-    layerControl.addOverlay(aqiPolygons, "AQI Map");
-    aqiPolygons.addTo(map);
+
+    // aqiPolygons = L.geoJson(geojsonPolygon, {
+    //     style: layer_style,
+    //     onEachFeature: onEachFeature
+    // });
 
     // if (first_run) {
     //     // Set up the vector tile layer for AQI polygons from the database
@@ -244,7 +258,43 @@ function refreshLayers(){
     //     aqiPolygons.addTo(map);
     // };
 
-    // aqiPolygons.setUrl(polygonUrl)
+    //////////////////////////////////////
+
+    // Function to parse the CSV and add station markers to the map
+    function loadAQIData(data) {
+        console.log(data);
+        data.forEach(function(station) {
+            var lat = station.X;
+            var lon = station.Y;
+            var name = station['Sensor Name'];
+            var aqi = station['US AQI'];
+            var source = station['source'];
+
+            var color = getSourceColor(source);
+
+            var circleMarker = L.circleMarker([lat, lon], {
+            color: '#000000',
+            weight: 2,
+            fillColor: color,
+            fillOpacity: 0.8,
+            radius: 6
+            }).addTo(map);
+
+            circleMarker.bindPopup(`
+            <b>Station Name:</b> ${name}<br>
+            <b>Current AQI:</b> ${aqi}<br>
+            <b>Location:</b> ${lat.toFixed(4)}, ${lon.toFixed(4)}<br>
+            <b>Source:</b> ${source}
+            `);
+        });
+        }
+    
+    fetch("/api/aqi")
+    .then((res) => res.json())
+    .then((data) => loadAQIData(data))
+    .catch(function (err) {
+        console.log('error: ' + err);
+    });
 
     //////////////////////////////////////
 
@@ -284,8 +334,6 @@ function refreshLayers(){
         layerControl.addOverlay(aqi_tiles, "AQI tilemap");
         aqi_tiles.addTo(map);
     };
-    
-    // aqi_tiles.setUrl(vectorUrl);
 
     /////////////////////////////
 
@@ -349,53 +397,6 @@ function refreshLayers(){
 
     first_run = false;
 
-    // Function to parse the CSV and add station markers to the map
-    function loadAQIData(csvData) {
-        Papa.parse(csvData, {
-        download: true,
-        header: true,
-        dynamicTyping: true,
-        skipEmptyLines: true,
-        complete: function(results) {
-            var data = results.data;
-    
-            // Loop through each row in the CSV and add a marker for each station
-            data.forEach(function(station) {
-            var lat = station.X; // Latitude (X)
-            var lon = station.Y; // Longitude (Y)
-            var name = station['Sensor Name']; // Sensor Name
-            var aqi = station['US AQI']; // US AQI
-            var source = station['source']; // Source of data
-    
-            var color = getSourceColor(source);
-
-            // Create a CircleMarker (dot) at the specified location
-            var circleMarker = L.circleMarker([lon, lat], {
-                color: '#000000',    // Black border color
-                weight: 2,           // Thickness of the border
-                fillColor: color,
-                fillOpacity: 0.8,
-                radius: 6 // Size of the dot
-            }).addTo(map);
-    
-            // Bind a tooltip to the marker with the station's info
-            circleMarker.bindPopup(`
-                <b>Station Name:</b> ${name}<br>
-                <b>Current AQI:</b> ${aqi}<br>
-                <b>Location:</b> ${lat.toFixed(4)}, ${lon.toFixed(4)}<br>
-                <b>Source:</b> ${source}
-            `);
-            });
-        },
-        error: function(error) {
-            console.error("Error parsing CSV:", error.message);
-        }
-        });
-    }
-    
-    var csvUrl = '/api/aqi';
-    loadAQIData(csvUrl);
-
     ////////////////////////////////////////
 
     if(info){
@@ -444,18 +445,18 @@ function refreshLayers(){
 }
 
 async function LoadData(){
-    const r1 = await fetch("/api/polygonized")
-        .then(function (response) {
-            console.log(response);
-            return response.json();
-        })
-        .then(function (data) {
-            geojsonPolygon = data;
-            refreshLayers();
-        })
-        .catch(function (err) {
-            console.log('error: ' + err);
-        });
+    // const r1 = await fetch("/api/polygonized")
+    //     .then(function (response) {
+    //         console.log(response);
+    //         return response.json();
+    //     })
+    //     .then(function (data) {
+    //         geojsonPolygon = data;
+    //         refreshLayers();
+    //     })
+    //     .catch(function (err) {
+    //         console.log('error: ' + err);
+    //     });
 
     // threshold_slider = L.control.slider(function(value) {
     //     threshold = value;
@@ -473,5 +474,5 @@ async function LoadData(){
     // }).addTo(map);
 }
 
-setInterval(function(){LoadData();},1 * 60 * 1000);
+setInterval(function(){refreshLayers();},1 * 60 * 1000);
 },{}]},{},[1]);
