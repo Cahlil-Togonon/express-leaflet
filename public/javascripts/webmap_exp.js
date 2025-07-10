@@ -196,7 +196,7 @@ function refreshLayers(){
         });
     }
 
-    fetch("/api/polygonized_aqi.geojson")
+    fetch("/api/polygonized")
     .then(res => res.json())
     .then(geojsonPolygon => {
         console.log(geojsonPolygon);
