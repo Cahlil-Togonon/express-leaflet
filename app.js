@@ -17,10 +17,6 @@ app.use(cookieParser());
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
 
-// app.listen(3000, () => {
-//   console.log(`Express server listening on port 3000`);
-// });
-
 app.get('/api/polygonized', (req, res) => {
   const filePath = path.join('/shared-data/express-leaflet/public/polygonized.json');
   
