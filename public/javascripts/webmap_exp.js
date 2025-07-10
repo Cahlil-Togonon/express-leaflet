@@ -1,5 +1,16 @@
 (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
 
+console.log(window.ROUTING_SERVER_URL);
+console.log(window.TILESERV_URL);
+
+var maxAQI = 100;
+var threshold = 200;
+var aqiPolygons, aqi_tiles, sensorLayer, info, legend;
+// var threshold_slider;
+var geojsonPolygon;
+var first_run = true;
+var layerControl = L.control.layers(null,null,{collapsed:false}).addTo(map);
+
 var plan = L.Routing.plan(
     [
         L.latLng(14.64956, 121.06837),
@@ -26,26 +37,9 @@ var plan = L.Routing.plan(
     }
     });
 
-var maxAQI = 100;
-var threshold = 100;
-var aqiPolygons, info, legend;
-// var threshold_slider;
-var geojsonPolygon;
-var aqi_tiles;
-var first_run = true;
-// var osmb = new OSMBuildings(map).load('https://{s}.data.osmbuildings.org/0.2/anonymous/tile/{z}/{x}/{y}.json');
-// layerControl.addOverlay(osmb, "OSM buildings");
-// osmb.addTo(map);
-var layerControl = L.control.layers(null,null,{collapsed:false}).addTo(map);
-
 var router = L.Routing.control({
-    // waypoints: [
-    //     L.latLng(14.64956, 121.06837),
-    //     L.latLng(14.64489 , 121.07427)
-    // ],
-    // router: L.Routing.graphHopper(apiKey='a8a55b5c-5382-407e-9301-a0d86d7f9a02'),
     router: L.Routing.graphHopper(undefined /* no api key */, {
-        serviceUrl: 'http://localhost:9098/routing',
+        serviceUrl: window.ROUTING_SERVER_URL || 'http://localhost:9098/routing',
         RouteType: "all",
         Vehicle: "car",
         alternatives: 3
@@ -55,16 +49,6 @@ var router = L.Routing.control({
     plan: plan,
     alternatives: true
 }).addTo(map);
-
-// var excludePoly = ''
-
-// var router = L.Routing.control({
-//     router: L.Routing.valhalla('','pedestrian',excludePoly,''),
-//     formatter: new L.Routing.Valhalla.Formatter(),
-//     routeWhileDragging: false,
-//     fitSelectedRoutes: false,
-//     plan: plan
-// }).addTo(map);
 
 // Create custom control for selecting RouteType
 var routeTypes = ['fastest', 'shortest', 'greenest', 'balanced', 'all'];
@@ -124,9 +108,8 @@ function updateActiveState(clickedButton, containerSelector) {
 }
 
 map.addControl(new routeTypeControl());
-map.addControl(new transportationControl()); // Add the routeType control to the map
+map.addControl(new transportationControl());
 
-// Set default selections (fastest and foot) on page load
 function setDefaultSelections() {
     // RouteType default to 'fastest'
     var defaultRouteTypeButton = document.querySelector('.route-type-control a:nth-child(3)');
@@ -142,7 +125,6 @@ function setDefaultSelections() {
 }
 
 window.onload = setDefaultSelections;
-
 
 function refreshLayers(){
     
@@ -225,25 +207,59 @@ function refreshLayers(){
     layerControl.addOverlay(aqiPolygons, "AQI Map");
     aqiPolygons.addTo(map);
 
+    // if (first_run) {
+    //     // Set up the vector tile layer for AQI polygons from the database
+    //     var vectorServer = window.TILESERV_URL || "http://localhost:7800/";
+    //     var polygonLayerId = 'public.polygonized_aqi';
+    //     var polygonUrl = vectorServer + polygonLayerId + '/{z}/{x}/{y}.pbf?properties=AQI';
+    //     console.log(polygonUrl);
+
+    //     // Define how each AQI polygon should be styled
+    //     var polygonTileStyling = {
+    //         'public.polygonized_aqi' : function(properties) {
+    //             return {
+    //                 fillColor: properties.aqi >= threshold ? '#000000' : getColor(properties.aqi),
+    //                 weight: 0,
+    //                 color: 'white',
+    //                 opacity: 1,
+    //                 fillOpacity: 0.3
+    //             };
+    //         }
+    //     };
+
+    //     // Define interactivity just like geoJson layer
+    //     var polygonTileOptions = {
+    //         vectorTileLayerStyles: polygonTileStyling,
+    //         interactive: true,
+    //         rendererFactory: L.canvas.tile,
+    //         style: layer_style,
+    //         onEachFeature: onEachFeature,
+    //         attribution: "&copy; AQI Tile Map via <a href='https://github.com/CrunchyData/pg_tileserv'>pg_tileserv</a>",
+    //     };
+
+    //     // Create the vectorGrid layer
+    //     aqiPolygons = L.vectorGrid.protobuf(polygonUrl, polygonTileOptions);
+
+    //     layerControl.addOverlay(aqiPolygons, "AQI Map");
+    //     aqiPolygons.addTo(map);
+    // };
+
+    // aqiPolygons.setUrl(polygonUrl)
+
     //////////////////////////////////////
-    
-    // if(aqi_tiles){
-    //     layerControl.removeLayer(aqi_tiles);
-    //     map.removeLayer(aqi_tiles);
-    // }
 
     if(first_run){
-        var vectorServer = "http://localhost:7800/";
+        var vectorServer = window.TILESERV_URL || "http://localhost:7800/";;
         // var vectorLayerId = 'public.aqi_filter';
         // var vectorUrl = vectorServer + vectorLayerId + `/{z}/{x}/{y}.pbf?properties=aqi&threshold=${threshold}`;
         var vectorLayerId = 'public.street_aqi';
-        var vectorUrl = vectorServer + vectorLayerId + `/{z}/{x}/{y}.pbf?properties=aqi`;
+        var vectorUrl = vectorServer + vectorLayerId + '/{z}/{x}/{y}.pbf?properties=aqi';
         console.log(vectorUrl);
         var vectorTileStyling = {
-            'default' : function(properties) {
+            'public.street_aqi' : function(properties) { // use 'default' if using aqi_timestamp
                 return {
-                    weight: 2,
-                    opacity: 0.5,
+                    weight: 3,
+                    opacity: 1,
                     color: getColor(properties.aqi),
                     fillOpacity: 0
                 }
@@ -260,11 +276,7 @@ function refreshLayers(){
         L.DomEvent.fakeStop = function () {
             return true;
         }
-        aqi_tiles = L.vectorGrid.protobuf(vectorUrl, vectorTileOptions,
-            {
-                onEachFeature: onEachFeature
-            }
-        ).on('click',function(e) {
+        aqi_tiles = L.vectorGrid.protobuf(vectorUrl, vectorTileOptions).on('click',function(e) {
             alert(e.layer.properties.aqi);
             L.DomEvent.stop(e);
         });
@@ -273,7 +285,6 @@ function refreshLayers(){
         aqi_tiles.addTo(map);
     };
     
-    first_run = false;
     // aqi_tiles.setUrl(vectorUrl);
 
     /////////////////////////////
@@ -291,6 +302,52 @@ function refreshLayers(){
             return '#ffff00'; // Default color (yellow)
         }
     }
+
+    // if (first_run) {
+    //     var vectorServer = window.TILESERV_URL || "http://localhost:7800/";
+    //     var vectorLayerId = 'public.sensor_aqi';
+    //     var sensorUrl = vectorServer + vectorLayerId + '/{z}/{x}/{y}.pbf?properties=sensor_name,aqi,source';
+    //     console.log(polygonUrl);
+
+    //     var sensorLayer = L.vectorGrid.protobuf(sensorUrl, {
+    //         vectorTileLayerStyles: {
+    //             'public.sensor_aqi' : function(properties, zoom) {
+    //                 var srccolor = getSourceColor(properties.source);
+    //                 return {
+    //                     fillColor: srccolor,
+    //                     fillOpacity: 1,
+    //                     radius: 6,
+    //                     color: srccolor,
+    //                     weight: 2
+    //                 };
+    //             }
+    //         },
+    //         interactive: true,
+    //         rendererFactory: L.canvas.tile,
+    //         attribution: "&copy; Sensor AQI data via pg_tileserv"
+    //     });
+
+    //     sensorLayer.on('click', function(e) {
+    //         const props = e.layer.properties;
+    //         const latlng = e.latlng;
+
+    //         L.popup()
+    //             .setLatLng(latlng)
+    //             .setContent(`
+    //                 <b>Station Name:</b> ${props.sensor_name}<br>
+    //                 <b>Current AQI:</b> ${props.aqi}<br>
+    //                 <b>Source:</b> ${props.source}
+    //             `)
+    //             .openOn(map);
+    //     });
+
+    //     layerControl.addOverlay(sensorLayer, "Sensor AQI");
+    //     sensorLayer.addTo(map);
+    // }
+
+    // sensorLayer.setUrl(sensorUrl);
+
+    first_run = false;
 
     // Function to parse the CSV and add station markers to the map
     function loadAQIData(csvData) {
@@ -336,7 +393,7 @@ function refreshLayers(){
         });
     }
     
-    var csvUrl = '/aqi.csv';
+    var csvUrl = '/api/aqi';
     loadAQIData(csvUrl);
 
     ////////////////////////////////////////
@@ -387,7 +444,7 @@ function refreshLayers(){
 }
 
 async function LoadData(){
-    const r1 = await fetch('../polygonized.json')
+    const r1 = await fetch("/api/polygonized")
         .then(function (response) {
             console.log(response);
             return response.json();
@@ -399,7 +456,6 @@ async function LoadData(){
         .catch(function (err) {
             console.log('error: ' + err);
         });
-    console.log(r1);
 
     // threshold_slider = L.control.slider(function(value) {
     //     threshold = value;
@@ -415,10 +471,7 @@ async function LoadData(){
     // position: 'topleft',
     // id: 'threshold_slider'
     // }).addTo(map);
-
-    setInterval(function(){refreshLayers();},1 * 60 * 1000);
 }
 
-LoadData();
-// setInterval(function(){LoadData();},1 * 30 * 1000);
+setInterval(function(){LoadData();},1 * 60 * 1000);
 },{}]},{},[1]);
