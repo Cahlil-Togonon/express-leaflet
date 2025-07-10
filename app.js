@@ -13,7 +13,6 @@ app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
-app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
@@ -66,6 +65,7 @@ app.get("/api/polygonized_aqi.geojson", async (req, res) => {
 });
 
 app.get('/config.js', (req, res) => {
+  console.log("GET /config.js called");
   res.type('application/javascript');
   res.send(`
     window.ROUTING_SERVER_URL = ${JSON.stringify(process.env.ROUTING_SERVER_URL || 'http://localhost:9098/routing')};
@@ -104,5 +104,7 @@ app.get('/api/aqi', async (req, res) => {
 // });
 
 app.use('/shared', express.static('/shared-data/express-leaflet/public'));
+
+app.use(express.static(path.join(__dirname, 'public')));
 
 module.exports = app;
