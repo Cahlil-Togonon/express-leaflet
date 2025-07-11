@@ -76,9 +76,8 @@ app.get('/api/aqi', async (req, res) => {
 });
 
 const axios = require('axios');
-const router = express.Router();
 
-router.get('/api/route', async (req, res) => {
+app.get('/api/route', async (req, res) => {
   try {
     const routingBackend = process.env.ROUTING_SERVER_URL || 'http://localhost:9098/routing';
 
@@ -95,7 +94,7 @@ router.get('/api/route', async (req, res) => {
   }
 });
 
-router.get('/api/tiles/:layer/:z/:x/:y.pbf', async (req, res) => {
+app.get('/api/tiles/:layer/:z/:x/:y.pbf', async (req, res) => {
   const TILESERVER_BASE = process.env.TILESERV_URL || 'http://localhost:7800/';
   const { layer, z, x, y } = req.params;
   const query = req.originalUrl.split('?')[1] || '';
@@ -116,8 +115,6 @@ router.get('/api/tiles/:layer/:z/:x/:y.pbf', async (req, res) => {
     res.status(500).send("Tile proxy failed");
   }
 });
-
-module.exports = router;
 
 // app.get('/api/polygonized', (req, res) => {
 //   const filePath = path.join('/shared-data/express-leaflet/public/polygonized.json');
