@@ -101,7 +101,7 @@ app.get('/api/tiles/:layer/:z/:x/:y.pbf', async (req, res) => {
   const tileUrl = `${TILESERVER_BASE}/${layer}/${z}/${x}/${y}.pbf${query ? '?' + query : ''}`;
 
   try {
-    console.log('tileserv URL:', routingBackend, req.query);
+    console.log('tileserv URL:', tileUrl);
     const response = await axios.get(tileUrl, {
       responseType: 'arraybuffer'
     });
