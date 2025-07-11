@@ -81,12 +81,12 @@ app.get('/api/route', async (req, res) => {
   try {
     const routingBackend = process.env.ROUTING_SERVER_URL || 'http://localhost:9098/routing';
 
-    console.log('Routing URL:', routingBackend, req.query);
-    const response = await axios.get(routingBackend, {
-      params: req.query
-    });
-    console.log(response);
+    const rawQuery = req.originalUrl.split('?')[1] || '';
+    const targetUrl = `${routingBackend}?${rawQuery}`;
 
+    console.log('Proxying to:', targetUrl);
+
+    const response = await axios.get(targetUrl);
     res.json(response.data);
   } catch (err) {
     console.error("Routing proxy error:", err.message);
@@ -97,15 +97,15 @@ app.get('/api/route', async (req, res) => {
 app.get('/api/tiles/:layer/:z/:x/:y.pbf', async (req, res) => {
   const TILESERVER_BASE = process.env.TILESERV_URL || 'http://localhost:7800/';
   const { layer, z, x, y } = req.params;
-  const query = req.originalUrl.split('?')[1] || '';
-  const tileUrl = `${TILESERVER_BASE}/${layer}/${z}/${x}/${y}.pbf${query ? '?' + query : ''}`;
+  const rawQuery = req.originalUrl.split('?')[1] || '';
+  const tileUrl = `${TILESERVER_BASE}${layer}/${z}/${x}/${y}.pbf${rawQuery ? '?' + rawQuery : ''}`;
 
   try {
-    console.log('tileserv URL:', tileUrl);
+    console.log('Proxying to tileserv:', tileUrl);
+
     const response = await axios.get(tileUrl, {
       responseType: 'arraybuffer'
     });
-    console.log(response);
 
     res.set('Content-Type', 'application/x-protobuf');
     res.set('Content-Encoding', 'gzip');
