@@ -82,9 +82,11 @@ router.get('/api/route', async (req, res) => {
   try {
     const routingBackend = process.env.ROUTING_SERVER_URL || 'http://localhost:9098/routing';
 
+    console.log('Routing URL:', routingBackend, req.query);
     const response = await axios.get(routingBackend, {
       params: req.query
     });
+    console.log(response);
 
     res.json(response.data);
   } catch (err) {
@@ -100,9 +102,11 @@ router.get('/api/tiles/:layer/:z/:x/:y.pbf', async (req, res) => {
   const tileUrl = `${TILESERVER_BASE}/${layer}/${z}/${x}/${y}.pbf${query ? '?' + query : ''}`;
 
   try {
+    console.log('tileserv URL:', routingBackend, req.query);
     const response = await axios.get(tileUrl, {
       responseType: 'arraybuffer'
     });
+    console.log(response);
 
     res.set('Content-Type', 'application/x-protobuf');
     res.set('Content-Encoding', 'gzip');
