@@ -358,5 +358,6 @@ function refreshLayers(){
     legend.setZIndex(10001); // Legend on top
 }
 
+refreshLayers();
 setInterval(function(){refreshLayers();},1 * 60 * 1000);
 },{}]},{},[1]);
