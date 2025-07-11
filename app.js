@@ -75,6 +75,46 @@ app.get('/api/aqi', async (req, res) => {
   }
 });
 
+const axios = require('axios');
+const router = express.Router();
+
+router.get('/api/route', async (req, res) => {
+  try {
+    const routingBackend = process.env.ROUTING_SERVER_URL || 'http://localhost:9098/routing';
+
+    const response = await axios.get(routingBackend, {
+      params: req.query
+    });
+
+    res.json(response.data);
+  } catch (err) {
+    console.error("Routing proxy error:", err.message);
+    res.status(500).json({ error: 'Routing failed' });
+  }
+});
+
+router.get('/api/tiles/:layer/:z/:x/:y.pbf', async (req, res) => {
+  const TILESERVER_BASE = process.env.TILESERV_URL || 'http://localhost:7800/';
+  const { layer, z, x, y } = req.params;
+  const query = req.originalUrl.split('?')[1] || '';
+  const tileUrl = `${TILESERVER_BASE}/${layer}/${z}/${x}/${y}.pbf${query ? '?' + query : ''}`;
+
+  try {
+    const response = await axios.get(tileUrl, {
+      responseType: 'arraybuffer'
+    });
+
+    res.set('Content-Type', 'application/x-protobuf');
+    res.set('Content-Encoding', 'gzip');
+    res.send(response.data);
+  } catch (error) {
+    console.error("Tile proxy error:", error.message);
+    res.status(500).send("Tile proxy failed");
+  }
+});
+
+module.exports = router;
+
 // app.get('/api/polygonized', (req, res) => {
 //   const filePath = path.join('/shared-data/express-leaflet/public/polygonized.json');
   

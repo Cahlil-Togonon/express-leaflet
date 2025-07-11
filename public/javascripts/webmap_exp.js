@@ -1,7 +1,7 @@
 (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
 
-console.log(window.ROUTING_SERVER_URL);
-console.log(window.TILESERV_URL);
+// console.log(window.ROUTING_SERVER_URL);
+// console.log(window.TILESERV_URL);
 
 var maxAQI = 100;
 var threshold = 200;
@@ -39,7 +39,7 @@ var plan = L.Routing.plan(
 
 var router = L.Routing.control({
     router: L.Routing.graphHopper(undefined /* no api key */, {
-        serviceUrl: window.ROUTING_SERVER_URL || 'http://localhost:9098/routing',
+        serviceUrl: '/api/route',
         RouteType: "all",
         Vehicle: "car",
         alternatives: 3
@@ -216,48 +216,6 @@ function refreshLayers(){
         console.log('error: ' + err);
     });
 
-    // aqiPolygons = L.geoJson(geojsonPolygon, {
-    //     style: layer_style,
-    //     onEachFeature: onEachFeature
-    // });
-
-    // if (first_run) {
-    //     // Set up the vector tile layer for AQI polygons from the database
-    //     var vectorServer = window.TILESERV_URL || "http://localhost:7800/";
-    //     var polygonLayerId = 'public.polygonized_aqi';
-    //     var polygonUrl = vectorServer + polygonLayerId + '/{z}/{x}/{y}.pbf?properties=AQI';
-    //     console.log(polygonUrl);
-
-    //     // Define how each AQI polygon should be styled
-    //     var polygonTileStyling = {
-    //         'public.polygonized_aqi' : function(properties) {
-    //             return {
-    //                 fillColor: properties.aqi >= threshold ? '#000000' : getColor(properties.aqi),
-    //                 weight: 0,
-    //                 color: 'white',
-    //                 opacity: 1,
-    //                 fillOpacity: 0.3
-    //             };
-    //         }
-    //     };
-
-    //     // Define interactivity just like geoJson layer
-    //     var polygonTileOptions = {
-    //         vectorTileLayerStyles: polygonTileStyling,
-    //         interactive: true,
-    //         rendererFactory: L.canvas.tile,
-    //         style: layer_style,
-    //         onEachFeature: onEachFeature,
-    //         attribution: "&copy; AQI Tile Map via <a href='https://github.com/CrunchyData/pg_tileserv'>pg_tileserv</a>",
-    //     };
-
-    //     // Create the vectorGrid layer
-    //     aqiPolygons = L.vectorGrid.protobuf(polygonUrl, polygonTileOptions);
-
-    //     layerControl.addOverlay(aqiPolygons, "AQI Map");
-    //     aqiPolygons.addTo(map);
-    // };
-
     //////////////////////////////////////
 
     // Function to parse the CSV and add station markers to the map
@@ -299,7 +257,7 @@ function refreshLayers(){
     //////////////////////////////////////
 
     if(first_run){
-        var vectorServer = window.TILESERV_URL || "http://localhost:7800/";;
+        var vectorServer = '/api/tiles/';
         // var vectorLayerId = 'public.aqi_filter';
         // var vectorUrl = vectorServer + vectorLayerId + `/{z}/{x}/{y}.pbf?properties=aqi&threshold=${threshold}`;
         var vectorLayerId = 'public.street_aqi';
@@ -351,50 +309,6 @@ function refreshLayers(){
         }
     }
 
-    // if (first_run) {
-    //     var vectorServer = window.TILESERV_URL || "http://localhost:7800/";
-    //     var vectorLayerId = 'public.sensor_aqi';
-    //     var sensorUrl = vectorServer + vectorLayerId + '/{z}/{x}/{y}.pbf?properties=sensor_name,aqi,source';
-    //     console.log(polygonUrl);
-
-    //     var sensorLayer = L.vectorGrid.protobuf(sensorUrl, {
-    //         vectorTileLayerStyles: {
-    //             'public.sensor_aqi' : function(properties, zoom) {
-    //                 var srccolor = getSourceColor(properties.source);
-    //                 return {
-    //                     fillColor: srccolor,
-    //                     fillOpacity: 1,
-    //                     radius: 6,
-    //                     color: srccolor,
-    //                     weight: 2
-    //                 };
-    //             }
-    //         },
-    //         interactive: true,
-    //         rendererFactory: L.canvas.tile,
-    //         attribution: "&copy; Sensor AQI data via pg_tileserv"
-    //     });
-
-    //     sensorLayer.on('click', function(e) {
-    //         const props = e.layer.properties;
-    //         const latlng = e.latlng;
-
-    //         L.popup()
-    //             .setLatLng(latlng)
-    //             .setContent(`
-    //                 <b>Station Name:</b> ${props.sensor_name}<br>
-    //                 <b>Current AQI:</b> ${props.aqi}<br>
-    //                 <b>Source:</b> ${props.source}
-    //             `)
-    //             .openOn(map);
-    //     });
-
-    //     layerControl.addOverlay(sensorLayer, "Sensor AQI");
-    //     sensorLayer.addTo(map);
-    // }
-
-    // sensorLayer.setUrl(sensorUrl);
-
     first_run = false;
 
     ////////////////////////////////////////
@@ -442,36 +356,6 @@ function refreshLayers(){
     circleMarker.setZIndex(1000); // Circle marker always on top
     info.setZIndex(10000); // Info control on top
     legend.setZIndex(10001); // Legend on top
-}
-
-async function LoadData(){
-    // const r1 = await fetch("/api/polygonized")
-    //     .then(function (response) {
-    //         console.log(response);
-    //         return response.json();
-    //     })
-    //     .then(function (data) {
-    //         geojsonPolygon = data;
-    //         refreshLayers();
-    //     })
-    //     .catch(function (err) {
-    //         console.log('error: ' + err);
-    //     });
-
-    // threshold_slider = L.control.slider(function(value) {
-    //     threshold = value;
-    //     refreshLayers();
-    // }, {
-    // max: 200,
-    // min: 0,
-    // value: threshold,
-    // step: 1,
-    // size: '250px',
-    // collapsed: false,
-    // logo: 'threshold',
-    // position: 'topleft',
-    // id: 'threshold_slider'
-    // }).addTo(map);
 }
 
 setInterval(function(){refreshLayers();},1 * 60 * 1000);
