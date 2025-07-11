@@ -107,8 +107,13 @@ app.get('/api/tiles/:layer/:z/:x/:y.pbf', async (req, res) => {
       responseType: 'arraybuffer'
     });
 
-    res.set('Content-Type', 'application/x-protobuf');
-    res.set('Content-Encoding', 'gzip');
+    res.set('Content-Type', response.headers["content-type"] || 'application/vnd.mapbox-vector-tile');
+    if (response.headers['content-encoding']) {
+      res.set('Content-Encoding', response.headers['content-encoding']);
+    }
+    if (response.headers['content-length']) {
+      res.set('Content-Length', response.headers['content-length']);
+    }
     res.send(response.data);
   } catch (error) {
     console.error("Tile proxy error:", error.message);
